@@ -1,8 +1,12 @@
+import logging
+
 from django.core.mail import EmailMessage, BadHeaderError
 from django.shortcuts import render, HttpResponse, redirect
 
 from emailer import forms
 from emailer.exception import exception_handler
+
+LOGGER = logging.getLogger(__name__)
 
 
 def sent(request):
@@ -17,6 +21,7 @@ def send(request):
     """
     view used to render the email form and to send the email
     """
+    LOGGER.info("STARTED")
     if request.method == 'GET':
         form = forms.EmailForm()
     else:
@@ -25,7 +30,9 @@ def send(request):
             data = form.cleaned_data
             email = EmailMessage(**data)
             try:
-                email.send(fail_silently=False)
+                sent_status = email.send(fail_silently=False)
+                if sent_status:
+                    LOGGER.info('Email successfully sent', extra=data)
             except BadHeaderError as e:
                 return HttpResponse('Invalid header found.')
             return redirect('/sent')
